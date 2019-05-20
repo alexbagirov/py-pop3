@@ -1,11 +1,19 @@
 from argparse import ArgumentParser, Namespace
 from typing import NoReturn
+from email.header import decode_header
 from getpass import getpass
 import re
 from pop.pop3 import Pop3
 
 
-BOUNDARY = re.compile('Content-Type: multipart/mixed;\s+boundary="(.*?)"')
+BOUNDARY = re.compile(r'Content-Type: multipart/mixed;\s+boundary="(.*?)"',
+                      flags=re.DOTALL | re.MULTILINE)
+DATE = re.compile(r'Date: (.+)?[\r\n]+')
+SUBJECT = re.compile(r'Subject: ((=\?.+?\?=)\s*)+',
+                     flags=re.MULTILINE)
+FROM = re.compile(r'From: ((=\?.+?\?=)\s*)+<(.+?)>',
+                  flags=re.DOTALL | re.MULTILINE)
+TO = re.compile(r'To: (.+)?[\r\n]+')
 
 
 def parse_args() -> Namespace:
@@ -39,11 +47,28 @@ def run() -> NoReturn:
     if not pop.auth(args.username, args.password):
         print('Incorrect password')
         return
-    pop.get_headers(1)
+    headers = pop.get_headers(1)
+    print(headers)
+    parse_headers(headers)
 
 
-def parse_headers(headers: str) -> str:
-    pass
+def parse_headers(headers: str) -> NoReturn:
+    date = re.search(DATE, headers).group(1)
+    subject = re.findall(SUBJECT, headers)
+    decoded_subject = ''
+    for i in subject:
+        decoded_subject += decode_header(i)[0][0].decode()
+    # subject = sum(map(decode_header, subject))
+    from_data = re.findall(FROM, headers)
+    from_name, from_email = from_data[:-1], from_data[-1]
+    from_name = sum(map(decode_header, from_name))
+    to = re.search(TO, headers).group(1)
+
+    print(date)
+    print(subject)
+    print(from_name)
+    print(from_email)
+    print(to)
 
 
 if __name__ == '__main__':

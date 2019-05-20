@@ -42,7 +42,7 @@ class Pop3:
 
     def get_headers(self, number: int = 1) -> NoReturn:
         self.send(f"TOP {number} 0")
-        print(self.receive())
+        return self.receive()
 
     def get_letter(self, number: int = 1) -> NoReturn:
         self.send(f"RETR {number}")
