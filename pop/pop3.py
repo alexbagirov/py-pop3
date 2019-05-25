@@ -29,21 +29,20 @@ class Pop3:
         self.s.settimeout(1)
         self.s = ssl.wrap_socket(self.s, ssl_version=ssl.PROTOCOL_SSLv23)
         self.s.connect((host, port))
-        print(self.receive())
+        self.receive()
 
     def auth(self, username: str, password: str) -> bool:
         self.send(f"USER {username}")
         self.send(f"PASS {password}")
         answer = self.receive()
-        print(answer)
         if answer.startswith('-ERR [AUTH]'):
             return False
         return True
 
-    def get_headers(self, number: int = 1) -> NoReturn:
-        self.send(f"TOP {number} 0")
+    def get_headers(self, number: int = 1, lines: int = 0) -> NoReturn:
+        self.send(f"TOP {number} {lines}")
         return self.receive()
 
     def get_letter(self, number: int = 1) -> NoReturn:
         self.send(f"RETR {number}")
-        print(self.receive())
+        return self.receive()
